@@ -46,7 +46,16 @@ export default defineConfig({
               }
             }
           }
+        ],
+        // Add notification click handler
+        additionalManifestEntries: [
+          { url: '/icon.svg', revision: null }
         ]
+      },
+      // Handle notification clicks
+      devOptions: {
+        enabled: true,
+        type: 'module'
       }
     })
   ],
