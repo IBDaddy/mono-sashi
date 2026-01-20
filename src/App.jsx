@@ -23,8 +23,11 @@ import {
   FileJson,
   Key,
   Zap,
-  Trash2
+  Trash2,
+  Bell,
+  BellOff
 } from 'lucide-react';
+import { initializeNotifications, requestNotificationPermission, areNotificationsEnabled } from './notificationUtils';
 
 // --- Translations ---
 const translations = {
@@ -121,6 +124,18 @@ const translations = {
     apiKeyPlaceholder: "AIzaSy... (任意)",
     expUnitLabel: "比較基準の金額",
     expUnitDesc: "「1回分」の金額（例：飲み代5000円）",
+    notificationTitle: "通知設定",
+    notificationDesc: "重要なタイミングでお知らせします",
+    enableNotifications: "通知を有効にする",
+    unlockNotification: "冷却期間終了通知",
+    reminderNotification: "24時間前のリマインダー",
+    budgetNotification: "予算アラート",
+    weeklySummaryNotification: "週次サマリー",
+    notificationPermission: "通知の許可",
+    notificationPermissionDesc: "ブラウザの通知を許可してください",
+    requestPermission: "許可をリクエスト",
+    permissionGranted: "許可済み",
+    permissionDenied: "拒否されています",
   },
   en: {
     title: "Mono-sashi",
@@ -215,6 +230,18 @@ const translations = {
     apiKeyPlaceholder: "AIzaSy... (Optional)",
     expUnitLabel: "Reference Unit Price",
     expUnitDesc: "Cost of one 'experience' (e.g. Dinner cost)",
+    notificationTitle: "Notification Settings",
+    notificationDesc: "Get notified at important moments",
+    enableNotifications: "Enable Notifications",
+    unlockNotification: "Unlock notifications",
+    reminderNotification: "24-hour reminders",
+    budgetNotification: "Budget alerts",
+    weeklySummaryNotification: "Weekly summary",
+    notificationPermission: "Notification Permission",
+    notificationPermissionDesc: "Allow browser notifications",
+    requestPermission: "Request Permission",
+    permissionGranted: "Granted",
+    permissionDenied: "Denied",
   }
 };
 
@@ -1190,6 +1217,118 @@ const SettingsView = ({ settings, setSettings, onBack, t, items, setItems, onVie
            </div>
          </div>
 
+         {/* Notification Settings */}
+         <div className="border-t border-slate-100 pt-6">
+           <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+             <Bell size={16} className="text-indigo-500"/>
+             {t.notificationTitle}
+           </label>
+           <p className="text-xs text-slate-500 mb-4">{t.notificationDesc}</p>
+
+           {/* Permission Status */}
+           <div className="mb-4 p-3 bg-slate-50 rounded-lg">
+             <div className="flex items-center justify-between mb-2">
+               <span className="text-sm font-bold text-slate-700">{t.notificationPermission}</span>
+               {areNotificationsEnabled() ? (
+                 <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold flex items-center gap-1">
+                   <Bell size={12} /> {t.permissionGranted}
+                 </span>
+               ) : (
+                 <span className="text-xs bg-slate-200 text-slate-600 px-2 py-1 rounded-full font-bold flex items-center gap-1">
+                   <BellOff size={12} /> {t.permissionDenied}
+                 </span>
+               )}
+             </div>
+             {!areNotificationsEnabled() && (
+               <Button
+                 onClick={async () => {
+                   const granted = await requestNotificationPermission();
+                   if (granted) {
+                     setSettings({...settings, notifications: {...settings.notifications, enabled: true}});
+                   }
+                 }}
+                 variant="secondary"
+                 className="w-full mt-2"
+               >
+                 {t.requestPermission}
+               </Button>
+             )}
+           </div>
+
+           {/* Notification toggles */}
+           <div className="space-y-3">
+             <label className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+               <span className="text-sm font-medium text-slate-700">{t.enableNotifications}</span>
+               <input
+                 type="checkbox"
+                 checked={settings.notifications?.enabled || false}
+                 onChange={(e) => setSettings({
+                   ...settings,
+                   notifications: {...settings.notifications, enabled: e.target.checked}
+                 })}
+                 className="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+                 disabled={!areNotificationsEnabled()}
+               />
+             </label>
+
+             <label className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+               <span className="text-sm font-medium text-slate-700">{t.unlockNotification}</span>
+               <input
+                 type="checkbox"
+                 checked={settings.notifications?.unlock || false}
+                 onChange={(e) => setSettings({
+                   ...settings,
+                   notifications: {...settings.notifications, unlock: e.target.checked}
+                 })}
+                 className="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+                 disabled={!settings.notifications?.enabled}
+               />
+             </label>
+
+             <label className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+               <span className="text-sm font-medium text-slate-700">{t.reminderNotification}</span>
+               <input
+                 type="checkbox"
+                 checked={settings.notifications?.reminder || false}
+                 onChange={(e) => setSettings({
+                   ...settings,
+                   notifications: {...settings.notifications, reminder: e.target.checked}
+                 })}
+                 className="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+                 disabled={!settings.notifications?.enabled}
+               />
+             </label>
+
+             <label className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+               <span className="text-sm font-medium text-slate-700">{t.budgetNotification}</span>
+               <input
+                 type="checkbox"
+                 checked={settings.notifications?.budget || false}
+                 onChange={(e) => setSettings({
+                   ...settings,
+                   notifications: {...settings.notifications, budget: e.target.checked}
+                 })}
+                 className="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+                 disabled={!settings.notifications?.enabled}
+               />
+             </label>
+
+             <label className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+               <span className="text-sm font-medium text-slate-700">{t.weeklySummaryNotification}</span>
+               <input
+                 type="checkbox"
+                 checked={settings.notifications?.weeklySummary || false}
+                 onChange={(e) => setSettings({
+                   ...settings,
+                   notifications: {...settings.notifications, weeklySummary: e.target.checked}
+                 })}
+                 className="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+                 disabled={!settings.notifications?.enabled}
+               />
+             </label>
+           </div>
+         </div>
+
          <div className="border-t border-slate-100 pt-6">
            <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
              <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-mono">DEV</span>
@@ -1226,7 +1365,14 @@ export default function MindfulSpendApp() {
     investmentRate: 0.05,
     monthlyBudget: 50000,
     currencySymbol: "¥",
-    geminiApiKey: ""
+    geminiApiKey: "",
+    notifications: {
+      enabled: false,
+      unlock: true,
+      reminder: true,
+      budget: true,
+      weeklySummary: true
+    }
   });
 
   const [newItem, setNewItem] = useState({
@@ -1311,6 +1457,13 @@ export default function MindfulSpendApp() {
        if (parsed.monthlyBudget === undefined) parsed.monthlyBudget = 50000;
        if (parsed.geminiApiKey === undefined) parsed.geminiApiKey = "";
        if (parsed.experienceUnit === undefined) parsed.experienceUnit = 5000;
+       if (parsed.notifications === undefined) parsed.notifications = {
+         enabled: false,
+         unlock: true,
+         reminder: true,
+         budget: true,
+         weeklySummary: true
+       };
        setSettings(parsed);
     }
     if (savedLang) setLang(savedLang);
@@ -1320,6 +1473,13 @@ export default function MindfulSpendApp() {
     localStorage.setItem('monosashi_items', JSON.stringify(items));
     localStorage.setItem('monosashi_settings', JSON.stringify(settings));
     localStorage.setItem('monosashi_lang', lang);
+  }, [items, settings, lang]);
+
+  // Initialize notifications
+  useEffect(() => {
+    if (settings.notifications?.enabled && items.length > 0) {
+      initializeNotifications(items, settings, lang, settings.notifications);
+    }
   }, [items, settings, lang]);
 
   const toggleLang = () => {
